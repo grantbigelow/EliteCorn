@@ -1,78 +1,78 @@
-def check_corn(grid):
-    rows = len(grid)
-    cols = len(grid[0])
+from functools import reduce
+import operator
 
-    results = []
-
-    for i in range(rows):
-        for j in range(cols):
-            if grid[i][j] == "\n":
-                continue
-
-            current = grid[i][j]
-            right_neighbors = []
-            left_neighbors = []
-            already_added = []
-            top_neighbors = []
-            bottom_neighbors = []
-
-            if ((i == 0 or i == rows)or (j==0 or j==cols)) and (i,j) not in already_added:
-                already_added.append((i,j))
-                results.append(current)
-            
-            #collect right neighbors
-            for k in range(j+1, cols):
-                right_neighbors.append(grid[i][k])
-            #check if current number is bigger than all its right neighbors
-            if all(current > neighbor for neighbor in right_neighbors) and (i,j) not in already_added:
-                already_added.append((i,j))
-                results.append(current)
-            
-            #collect left neighbors
+class CornAnalyzer:
+    def __init__(self,grid):
+        self.grid = grid
+        self.rows = len(grid)
+        self.cols = len(grid[0])
+        self.results = []
+        self.already_added = []
+        self.neighbor_dict = {}
+    
+    def check_corn_direction(self, i, j, direction):
+        current = self.grid[i][j]
+        neighbors = []
+        smaller_corn = 0
+        if direction == "right":
+            for k in range(j+1, self.cols):
+                neighbors.append(self.grid[i][k])
+        elif direction == "left":
             for k in range(j):
-                left_neighbors.append(grid[i][k])
-            #check if current number is bigger than all its left neighbors
-            if all(current > neighbor for neighbor in left_neighbors) and (i,j) not in already_added:
-                already_added.append((i,j))
-                results.append(current)
+                neighbors.append(self.grid[i][k])
+        elif direction == 'top':
+            for k in range(i):
+                neighbors.append(self.grid[k][j])
+        elif direction == 'bottom':
+            for k in range(i+1,self.rows):
+                neighbors.append(self.grid[k][j])
+        self.neighbor_dict[(i,j)] = [] if (i,j) not in self.neighbor_dict else self.neighbor_dict[(i,j)]
+        if all(current > neighbor for neighbor in neighbors):
+            if (i,j) not in self.already_added:
+                self.already_added.append((i,j))
+                self.results.append(current)
+        
+        for neighbor in neighbors:
+            if current > neighbor:
+                smaller_corn += 1
+        
+        self. neighbor_dict[(i,j)].append(smaller_corn)
 
-            #collect top neighbors
-            for k in range(j):
-                top_neighbors.append(grid[i][k])
-            #check if current number is bigger than all its top neighbors
-            if all(current > neighbor for neighbor in top_neighbors) and (i,j) not in already_added:
-                already_added.append((i,j))
-                results.append(current)
+    def check_neighbors(self):
+        for i in range(self.rows):
+            for j in range(self.cols):
+                if self.grid[i][j] == "\n":
+                    continue
 
-            #collect bottom neighbors
-            for k in range(j+1, rows):
-                bottom_neighbors.append(grid[k][j])
-            #check if current number is bigger than all its right neighbors
-            if all(current > neighbor for neighbor in bottom_neighbors) and (i,j) not in already_added:
-                already_added.append((i,j))
-                results.append(current)
-    return results
+                #Check neighbors of inner-corn in all directions
+                self.check_corn_direction(i,j,'right')
+                self.check_corn_direction(i,j,'left')
+                self.check_corn_direction(i,j,'top')
+                self.check_corn_direction(i,j,'bottom')
+        
+        return self.results
+
 def main():
     f = open("input.txt", "r")
-    corn_row = []
-    left_side = []
-    right_side = []
     input_string = '''41484
 36623
 76443
 44650
 46401'''
-
+    input= f.read()
     grid = [list(map(int, line.strip())) for line in input_string.strip().split('\n')]
-    print('Visible Corn:', check_corn(grid))
-    print('Total Number of Visible Corn:', len(check_corn(grid)))
-    # for row in f.readlines():
-    #     corn_row.append(row.replace("\n", ""))
-    #     left_side.append(row[0])
-    #     right_side.append(row[-2])
-    # first_row = corn_row[0]
-    # last_row = corn_row[-1]
-    # print('corn', right_side, left_side)
+    corn_grid = CornAnalyzer(grid)
+    corn = corn_grid.check_neighbors()
+    print('Total Number of Visible Corn:', len(corn))
+
+    elite_corn_num = 0
+    elite_corn = ()
+    for corn_stalk in corn_grid.neighbor_dict:
+        if elite_corn_num < reduce(operator.mul,corn_grid.neighbor_dict[corn_stalk]):
+            elite_corn_num = reduce(operator.mul,corn_grid.neighbor_dict[corn_stalk])
+            elite_corn = corn_stalk
+    print("Elite Corn:", elite_corn, "Elite Corn Score:",elite_corn_num)
+    print(corn_grid.neighbor_dict[elite_corn])
 
 # Using the special variable 
 # __name__
