@@ -7,63 +7,52 @@ class CornAnalyzer:
         self.rows = len(grid)
         self.cols = len(grid[0])
         self.results = []
-        self.already_added = []
+        self.already_added = set()
         self.neighbor_dict = {}
     
-    def check_corn_direction(self, i, j, direction):
+    def check_corn(self, i, j):
         current = self.grid[i][j]
-        neighbors = []
-        smaller_corn = 0
-        if direction == "right":
-            for k in range(j+1, self.cols):
-                neighbors.append(self.grid[i][k])
-        elif direction == "left":
-            for k in range(j):
-                neighbors.append(self.grid[i][k])
-        elif direction == 'top':
-            for k in range(i):
-                neighbors.append(self.grid[k][j])
-        elif direction == 'bottom':
-            for k in range(i+1,self.rows):
-                neighbors.append(self.grid[k][j])
-        self.neighbor_dict[(i,j)] = [] if (i,j) not in self.neighbor_dict else self.neighbor_dict[(i,j)]
-        if all(current > neighbor for neighbor in neighbors):
-            if (i,j) not in self.already_added:
-                self.already_added.append((i,j))
-                self.results.append(current)
         
-        for neighbor in neighbors:
-            if current > neighbor:
-                smaller_corn += 1
-        
-        self. neighbor_dict[(i,j)].append(smaller_corn)
+        #find neighbors in all directions from current corn stalk
+        neighbors = {
+            'right': [self.grid[i][k] for k in range(j +1, self.cols)],
+            'left': [self.grid[i][k] for k in range(j)],
+            'top': [self.grid[k][j] for k in range(i)],
+            'bottom':[self.grid[k][j] for k in range(i+1, self.rows)]
+        }
+        self.neighbor_dict[(i,j)] = []
 
+        #check if current corn is visible from outside the corn field
+        for direction in neighbors:
+            if all(current > neighbor for neighbor in neighbors[direction]) and (i,j) not in self.already_added:
+                self.already_added.add((i,j))
+                self.results.append(current)
+                break
+        #adds number of plants smaller than current corn in each direction
+        for direction in neighbors:
+            smaller_corn = sum(1 for neighbor in neighbors[direction] if current > neighbor)
+            self.neighbor_dict[(i,j)].append(smaller_corn)
+        
     def check_neighbors(self):
         for i in range(self.rows):
             for j in range(self.cols):
                 if self.grid[i][j] == "\n":
                     continue
-
-                #Check neighbors of inner-corn in all directions
-                self.check_corn_direction(i,j,'right')
-                self.check_corn_direction(i,j,'left')
-                self.check_corn_direction(i,j,'top')
-                self.check_corn_direction(i,j,'bottom')
-        
+                self.check_corn(i,j)  
         return self.results
 
 def main():
-    f = open("input.txt", "r")
-    input_string = '''41484
+    with open("input.txt", "r") as f:
+        input_string = f.read().strip()
+    input = '''41484
 36623
 76443
 44650
 46401'''
-    input= f.read()
-    grid = [list(map(int, line.strip())) for line in input_string.strip().split('\n')]
+    grid = [list(map(int, line.strip())) for line in input.split('\n') if line.strip()]
     corn_grid = CornAnalyzer(grid)
-    corn = corn_grid.check_neighbors()
-    print('Total Number of Visible Corn:', len(corn))
+    corn_grid.check_neighbors()
+    
 
     elite_corn_num = 0
     elite_corn = ()
@@ -71,8 +60,14 @@ def main():
         if elite_corn_num < reduce(operator.mul,corn_grid.neighbor_dict[corn_stalk]):
             elite_corn_num = reduce(operator.mul,corn_grid.neighbor_dict[corn_stalk])
             elite_corn = corn_stalk
-    print("Elite Corn:", elite_corn, "Elite Corn Score:",elite_corn_num)
-    print(corn_grid.neighbor_dict[elite_corn])
+    print('Total number of visible corn from outside the field:', len(corn_grid.results))
+    print("Elite Corn Spot:", elite_corn)
+    print("Elite Corn Score:",elite_corn_num)
+    print("Number of plants viewable from Elite Corn")
+    print("Right:",corn_grid.neighbor_dict[elite_corn][0],
+          "Left:",corn_grid.neighbor_dict[elite_corn][1],
+          "Top:",corn_grid.neighbor_dict[elite_corn][2],
+          "Bottom:",corn_grid.neighbor_dict[elite_corn][3])
 
 # Using the special variable 
 # __name__
