@@ -44,12 +44,8 @@ class CornAnalyzer:
 def main():
     with open("input.txt", "r") as f:
         input_string = f.read().strip()
-    input = '''41484
-36623
-76443
-44650
-46401'''
-    grid = [list(map(int, line.strip())) for line in input.split('\n') if line.strip()]
+    
+    grid = [list(map(int, line.strip())) for line in input_string.split('\n') if line.strip()]
     corn_grid = CornAnalyzer(grid)
     corn_grid.check_neighbors()
     
@@ -63,7 +59,7 @@ def main():
     print('Total number of visible corn from outside the field:', len(corn_grid.results))
     print("Elite Corn Spot:", elite_corn)
     print("Elite Corn Score:",elite_corn_num)
-    print("Number of plants viewable from Elite Corn")
+    print("Number of plants viewable from Elite Corn:")
     print("Right:",corn_grid.neighbor_dict[elite_corn][0],
           "Left:",corn_grid.neighbor_dict[elite_corn][1],
           "Top:",corn_grid.neighbor_dict[elite_corn][2],
